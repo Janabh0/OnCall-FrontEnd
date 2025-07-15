@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { AppColors } from "../constants/Colors";
 
 type ActiveTab = "home" | "appointments" | "messages" | "profile";
 
@@ -41,6 +42,11 @@ export default function ProfilePage() {
     confirmed: false,
   });
 
+  // Calendar state for date of birth selection
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
+
   const handleTabPress = (tab: ActiveTab) => {
     setActiveTab(tab);
     switch (tab) {
@@ -65,6 +71,84 @@ export default function ProfilePage() {
       [field]: value,
     }));
   };
+
+  // Calendar functions
+  const goToPreviousMonth = () => {
+    setCurrentMonth((prev) => {
+      const newDate = new Date(prev);
+      newDate.setMonth(prev.getMonth() - 1);
+      return newDate;
+    });
+  };
+
+  const goToNextMonth = () => {
+    setCurrentMonth((prev) => {
+      const newDate = new Date(prev);
+      newDate.setMonth(prev.getMonth() + 1);
+      return newDate;
+    });
+  };
+
+  const formatMonthYear = (date: Date) => {
+    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  };
+
+  const generateCalendarDays = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startDayOfWeek = firstDay.getDay();
+
+    const days = [];
+
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < startDayOfWeek; i++) {
+      days.push(null);
+    }
+
+    // Add days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(day);
+    }
+
+    return days;
+  };
+
+  const handleDateSelect = (day: number) => {
+    const selectedDateObj = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      day
+    );
+    setSelectedDate(selectedDateObj);
+
+    // Format the date as YYYY-MM-DD
+    const formattedDate = selectedDateObj.toISOString().split("T")[0];
+    handleInputChange("dateOfBirth", formattedDate);
+    setShowCalendar(false);
+  };
+
+  const isDateSelected = (day: number) => {
+    if (!selectedDate || !day) return false;
+    return (
+      selectedDate.getDate() === day &&
+      selectedDate.getMonth() === currentMonth.getMonth() &&
+      selectedDate.getFullYear() === currentMonth.getFullYear()
+    );
+  };
+
+  const isToday = (day: number) => {
+    const today = new Date();
+    return (
+      today.getDate() === day &&
+      today.getMonth() === currentMonth.getMonth() &&
+      today.getFullYear() === currentMonth.getFullYear()
+    );
+  };
+
+  const calendarDays = generateCalendarDays(currentMonth);
 
   const handleAddPatient = () => {
     if (!patientForm.confirmed) {
@@ -108,6 +192,8 @@ export default function ProfilePage() {
       specialCareInstructions: "",
       confirmed: false,
     });
+    setSelectedDate(null);
+    setShowCalendar(false);
   };
 
   const renderTabIcon = (tabName: ActiveTab, iconName: string) => {
@@ -116,7 +202,7 @@ export default function ProfilePage() {
       <Ionicons
         name={iconName as any}
         size={24}
-        color={isActive ? "#ef4444" : "#9ca3af"}
+        color={isActive ? AppColors.primary : "#9ca3af"}
       />
     );
   };
@@ -138,54 +224,64 @@ export default function ProfilePage() {
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={40} color="#f97316" />
+              <Ionicons name="person" size={40} color={AppColors.primary} />
             </View>
           </View>
           <View style={styles.profileInfoContainer}>
-            <Text style={styles.profileName}>Dr. Amelia Harper</Text>
+            <Text style={styles.profileName}>Dalal Mohammad</Text>
             <Text style={styles.profileRole}>Primary Care Physician</Text>
-            <Text style={styles.profileJoined}>Joined 2021</Text>
+            <Text style={styles.profileJoined}>Joined 2025</Text>
           </View>
           <TouchableOpacity style={styles.editIcon}>
-            <Ionicons name="pencil" size={20} color="#ef4444" />
+            <Ionicons name="pencil" size={20} color={AppColors.primary} />
           </TouchableOpacity>
         </View>
 
         {/* Personal Information */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Personal Information</Text>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Date of Birth</Text>
-            <Text style={styles.infoValue}>July 15, 1985</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Gender</Text>
-            <Text style={styles.infoValue}>Female</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Blood Type</Text>
-            <Text style={styles.infoValue}>O-Positive</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Address</Text>
-            <Text style={styles.infoValue}>123 Health St, Anytown, USA</Text>
+          <View style={styles.infoGrid}>
+            <View style={styles.infoGridItem}>
+              <Text style={styles.infoLabel}>Date of Birth</Text>
+              <Text style={styles.infoValue}>July 24, 1990</Text>
+            </View>
+            <View style={styles.infoGridItem}>
+              <Text style={styles.infoLabel}>Gender</Text>
+              <Text style={styles.infoValue}>Female</Text>
+            </View>
+            <View style={styles.infoGridItem}>
+              <Text style={styles.infoLabel}>Blood Type</Text>
+              <Text style={styles.infoValue}>O-Positive</Text>
+            </View>
+            <View style={styles.infoGridItem}>
+              <Text style={styles.infoLabel}>Address</Text>
+              <Text style={styles.infoValue}>
+                123 FreeZone St, Anytown, KWT
+              </Text>
+            </View>
           </View>
         </View>
 
         {/* Medical History */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Medical History</Text>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Allergies</Text>
-            <Text style={styles.infoValue}>None</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Conditions</Text>
-            <Text style={styles.infoValue}>High Blood Pressure</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Medications</Text>
-            <Text style={styles.infoValue}>Aspirin, Lisinopril</Text>
+          <View style={styles.infoGrid}>
+            <View style={styles.infoGridItem}>
+              <Text style={styles.infoLabel}>Allergies</Text>
+              <Text style={styles.infoValue}>None</Text>
+            </View>
+            <View style={styles.infoGridItem}>
+              <Text style={styles.infoLabel}>Conditions</Text>
+              <Text style={styles.infoValue}>High Blood Pressure</Text>
+            </View>
+            <View style={styles.infoGridItem}>
+              <Text style={styles.infoLabel}>Medications</Text>
+              <Text style={styles.infoValue}>Aspirin, Lisinopril</Text>
+            </View>
+            <View style={styles.infoGridItem}>
+              <Text style={styles.infoLabel}>Surgeries</Text>
+              <Text style={styles.infoValue}>Appendectomy (2010)</Text>
+            </View>
           </View>
         </View>
 
@@ -274,16 +370,89 @@ export default function ProfilePage() {
 
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Date of Birth *</Text>
-              <TextInput
+              <TouchableOpacity
                 style={styles.formInput}
-                value={patientForm.dateOfBirth}
-                onChangeText={(value) =>
-                  handleInputChange("dateOfBirth", value)
-                }
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor="#9ca3af"
-              />
+                onPress={() => setShowCalendar(true)}
+              >
+                <Text style={styles.formInputText}>
+                  {selectedDate
+                    ? selectedDate.toLocaleDateString()
+                    : "Select Date"}
+                </Text>
+                <Ionicons name="calendar" size={20} color="#9ca3af" />
+              </TouchableOpacity>
             </View>
+
+            {/* Calendar Modal */}
+            {showCalendar && (
+              <View style={styles.calendarOverlay}>
+                <View style={styles.calendarModal}>
+                  <View style={styles.calendarHeader}>
+                    <TouchableOpacity onPress={goToPreviousMonth}>
+                      <Ionicons name="chevron-back" size={24} color="#6b7280" />
+                    </TouchableOpacity>
+                    <Text style={styles.calendarMonthYear}>
+                      {formatMonthYear(currentMonth)}
+                    </Text>
+                    <TouchableOpacity onPress={goToNextMonth}>
+                      <Ionicons
+                        name="chevron-forward"
+                        size={24}
+                        color="#6b7280"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.calendarGrid}>
+                    {/* Days of the week */}
+                    <View style={styles.calendarDayNames}>
+                      <Text style={styles.calendarDayName}>Sun</Text>
+                      <Text style={styles.calendarDayName}>Mon</Text>
+                      <Text style={styles.calendarDayName}>Tue</Text>
+                      <Text style={styles.calendarDayName}>Wed</Text>
+                      <Text style={styles.calendarDayName}>Thu</Text>
+                      <Text style={styles.calendarDayName}>Fri</Text>
+                      <Text style={styles.calendarDayName}>Sat</Text>
+                    </View>
+                    {/* Calendar days */}
+                    <View style={styles.calendarDays}>
+                      {calendarDays.map((day, index) => {
+                        const isSelected = day ? isDateSelected(day) : false;
+                        const isTodayDate = day ? isToday(day) : false;
+
+                        return (
+                          <TouchableOpacity
+                            key={index}
+                            style={[
+                              styles.calendarDay,
+                              isSelected && styles.calendarDaySelected,
+                              isTodayDate && styles.calendarDayToday,
+                            ]}
+                            onPress={() => day && handleDateSelect(day)}
+                            disabled={!day}
+                          >
+                            <Text
+                              style={[
+                                styles.calendarDayText,
+                                isSelected && styles.calendarDayTextSelected,
+                                isTodayDate && styles.calendarDayTextToday,
+                              ]}
+                            >
+                              {day}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.calendarCloseButton}
+                    onPress={() => setShowCalendar(false)}
+                  >
+                    <Text style={styles.calendarCloseButtonText}>Close</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
 
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Gender *</Text>
@@ -398,7 +567,11 @@ export default function ProfilePage() {
                 }
               >
                 {patientForm.confirmed && (
-                  <Ionicons name="checkmark" size={16} color="#ef4444" />
+                  <Ionicons
+                    name="checkmark"
+                    size={16}
+                    color={AppColors.primary}
+                  />
                 )}
               </TouchableOpacity>
               <Text style={styles.checkboxLabel}>
@@ -492,7 +665,7 @@ export default function ProfilePage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
+    backgroundColor: AppColors.background,
   },
   header: {
     flexDirection: "row",
@@ -543,7 +716,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#fed7aa",
+    backgroundColor: AppColors.surface,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -589,7 +762,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#E1EEBC",
     marginBottom: 8,
   },
   patientName: {
@@ -620,11 +793,19 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   careButton: {
-    backgroundColor: "#ef4444",
+    backgroundColor: AppColors.primary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
     alignItems: "center",
+    shadowColor: AppColors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   careButtonText: {
     color: "white",
@@ -679,13 +860,22 @@ const styles = StyleSheet.create({
   },
   formInput: {
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: "#E1EEBC",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 16,
     color: "#111827",
     backgroundColor: "white",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  formInputText: {
+    flex: 1,
+    fontSize: 16,
+    color: "#111827",
+    marginRight: 8,
   },
   textArea: {
     minHeight: 80,
@@ -698,22 +888,22 @@ const styles = StyleSheet.create({
   pickerOption: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: "#E1EEBC",
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: "center",
     backgroundColor: "white",
   },
   pickerOptionSelected: {
-    borderColor: "#ef4444",
-    backgroundColor: "#fef2f2",
+    borderColor: AppColors.primary,
+    backgroundColor: AppColors.surfaceLight,
   },
   pickerOptionText: {
     fontSize: 16,
     color: "#6b7280",
   },
   pickerOptionTextSelected: {
-    color: "#ef4444",
+    color: AppColors.primary,
     fontWeight: "500",
   },
   checkboxContainer: {
@@ -725,7 +915,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderWidth: 2,
-    borderColor: "#d1d5db",
+    borderColor: "#E1EEBC",
     borderRadius: 4,
     marginRight: 12,
     marginTop: 2,
@@ -739,11 +929,19 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   submitButton: {
-    backgroundColor: "#ef4444",
+    backgroundColor: AppColors.primary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
     alignItems: "center",
+    shadowColor: AppColors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   submitButtonText: {
     color: "white",
@@ -777,6 +975,119 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
   },
   activeTabText: {
-    color: "#ef4444",
+    color: AppColors.primary,
+  },
+  infoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  infoGridItem: {
+    width: "48%",
+    backgroundColor: "#f9fafb",
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E1EEBC",
+  },
+
+  // Calendar styles
+  calendarOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+  },
+  calendarModal: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    width: "90%",
+    maxWidth: 350,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  calendarHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  calendarMonthYear: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  calendarGrid: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  calendarDayNames: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 8,
+  },
+  calendarDayName: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "500",
+  },
+  calendarDays: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-around",
+  },
+  calendarDay: {
+    width: "14%", // 7 days in a week
+    aspectRatio: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 4,
+    borderRadius: 8,
+  },
+  calendarDaySelected: {
+    backgroundColor: AppColors.primary,
+    borderColor: AppColors.primary,
+  },
+  calendarDayToday: {
+    backgroundColor: AppColors.surfaceLight,
+    borderColor: AppColors.surfaceLight,
+  },
+  calendarDayText: {
+    fontSize: 14,
+    color: "#6b7280",
+  },
+  calendarDayTextSelected: {
+    color: "white",
+    fontWeight: "500",
+  },
+  calendarDayTextToday: {
+    color: AppColors.primary,
+    fontWeight: "500",
+  },
+  calendarCloseButton: {
+    backgroundColor: AppColors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 16,
+  },
+  calendarCloseButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "500",
   },
 });

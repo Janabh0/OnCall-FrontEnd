@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
@@ -12,6 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { AppColors } from "../constants/Colors";
+import { useFavourites } from "./_layout";
 
 type ActiveTab = "home" | "appointments" | "messages" | "profile";
 
@@ -35,25 +37,31 @@ interface DurationOption {
 const doctors: Doctor[] = [
   {
     id: "1",
-    name: "Dr. Ethan Carter",
-    specialty: "Cardiologist",
+    name: "Dr. Shoug alkanderi",
+    specialty: "Physical therapy",
     image: "/placeholder.svg?height=50&width=50",
   },
   {
     id: "2",
-    name: "Dr. Sophia Hayes",
+    name: "Dr. Jana Alhamad",
     specialty: "Dermatologist",
     image: "/placeholder.svg?height=50&width=50",
   },
   {
     id: "3",
-    name: "Dr. Noah Bennett",
-    specialty: "Pediatrician",
+    name: "Dr. Fatma Zamanan",
+    specialty: "Internal medicine doctor",
     image: "/placeholder.svg?height=50&width=50",
   },
   {
     id: "4",
-    name: "Dr. Olivia Reed",
+    name: "Dr. Fajer Alhammadi",
+    specialty: "Nutrition ",
+    image: "/placeholder.svg?height=50&width=50",
+  },
+  {
+    id: "5",
+    name: "Dr. Shahad Abdulrahem",
     specialty: "Neurologist",
     image: "/placeholder.svg?height=50&width=50",
   },
@@ -80,6 +88,7 @@ const durationOptions: DurationOption[] = [
 ];
 
 export default function AppointmentsPage() {
+  const { doctorId } = useLocalSearchParams<{ doctorId?: string }>();
   const [activeTab, setActiveTab] = useState<ActiveTab>("appointments");
   const [selectedSpecialty, setSelectedSpecialty] = useState("All");
   const [showModal, setShowModal] = useState(false);
@@ -90,6 +99,7 @@ export default function AppointmentsPage() {
   const [selectedDuration, setSelectedDuration] =
     useState<DurationOption | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const { favouriteDoctors, toggleFavourite } = useFavourites();
 
   // Calendar date handling
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -97,10 +107,11 @@ export default function AppointmentsPage() {
 
   const specialties = [
     "All",
-    "Cardiologist",
+    "Physical therapy",
     "Dermatologist",
-    "Pediatrician",
+    "Internal medicine doctor",
     "Neurologist",
+    "Nutrition ",
   ];
 
   const filteredDoctors = doctors.filter((doctor) => {
@@ -238,10 +249,21 @@ export default function AppointmentsPage() {
       <Ionicons
         name={iconName as any}
         size={24}
-        color={isActive ? "#ef4444" : "#9ca3af"}
+        color={isActive ? AppColors.primary : "#9ca3af"}
       />
     );
   };
+
+  // On mount, if doctorId param is present, preselect that doctor and open the modal
+  React.useEffect(() => {
+    if (doctorId) {
+      const doc = doctors.find((d) => d.id === doctorId);
+      if (doc) {
+        setSelectedDoctor(doc);
+        setShowModal(true);
+      }
+    }
+  }, [doctorId]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -309,25 +331,48 @@ export default function AppointmentsPage() {
 
         {/* Doctors List */}
         <View style={styles.doctorsList}>
-          {filteredDoctors.map((doctor) => (
-            <View key={doctor.id} style={styles.doctorCard}>
-              <View style={styles.doctorInfo}>
-                <View style={styles.doctorAvatar}>
-                  <Ionicons name="person" size={24} color="#6b7280" />
+          {filteredDoctors.map((doctor) => {
+            const isFavourite = favouriteDoctors.some(
+              (d) => d.id === doctor.id
+            );
+            return (
+              <View key={doctor.id} style={styles.doctorCard}>
+                <View style={styles.doctorInfo}>
+                  <View style={styles.doctorAvatar}>
+                    <Ionicons
+                      name="person"
+                      size={24}
+                      color={AppColors.primary}
+                    />
+                  </View>
+                  <View style={styles.doctorDetails}>
+                    <Text style={styles.doctorName}>{doctor.name}</Text>
+                    <Text style={styles.doctorSpecialty}>
+                      {doctor.specialty}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.doctorDetails}>
-                  <Text style={styles.doctorName}>{doctor.name}</Text>
-                  <Text style={styles.doctorSpecialty}>{doctor.specialty}</Text>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <TouchableOpacity
+                    style={styles.bookButton}
+                    onPress={() => handleBookDoctor(doctor)}
+                  >
+                    <Text style={styles.bookButtonText}>Book</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ marginLeft: 12 }}
+                    onPress={() => toggleFavourite(doctor)}
+                  >
+                    <Ionicons
+                      name={isFavourite ? "heart" : "heart-outline"}
+                      size={26}
+                      color={isFavourite ? AppColors.primary : "#9ca3af"}
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
-              <TouchableOpacity
-                style={styles.bookButton}
-                onPress={() => handleBookDoctor(doctor)}
-              >
-                <Text style={styles.bookButtonText}>Book</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
+            );
+          })}
         </View>
       </ScrollView>
 
@@ -359,7 +404,7 @@ export default function AppointmentsPage() {
             {selectedDoctor && (
               <View style={styles.doctorInfoModal}>
                 <View style={styles.doctorAvatarModal}>
-                  <Ionicons name="person" size={28} color="white" />
+                  <Ionicons name="person" size={28} color={AppColors.primary} />
                 </View>
                 <View style={styles.doctorDetailsModal}>
                   <Text style={styles.doctorNameModal}>
@@ -698,7 +743,7 @@ export default function AppointmentsPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
+    backgroundColor: AppColors.background,
   },
   header: {
     flexDirection: "row",
@@ -767,19 +812,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#e5e7eb",
+    backgroundColor: AppColors.surface,
     marginRight: 8,
+    borderWidth: 1,
+    borderColor: AppColors.border,
   },
   specialtyButtonSelected: {
-    backgroundColor: "#ef4444",
+    backgroundColor: AppColors.primary,
+    borderColor: AppColors.primary,
+    shadowColor: AppColors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   specialtyButtonText: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#374151",
+    color: AppColors.textSecondary,
   },
   specialtyButtonTextSelected: {
     color: "white",
+    fontWeight: "600",
   },
   doctorsList: {
     gap: 12,
@@ -803,7 +860,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#f3f4f6",
+    backgroundColor: AppColors.surface,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -822,10 +879,19 @@ const styles = StyleSheet.create({
     color: "#6b7280",
   },
   bookButton: {
-    backgroundColor: "#ef4444",
-    paddingHorizontal: 24,
-    paddingVertical: 8,
+    backgroundColor: AppColors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
+    alignItems: "center",
+    shadowColor: AppColors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   bookButtonText: {
     color: "white",
@@ -870,7 +936,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#f3f4f6",
+    backgroundColor: AppColors.surface,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 16,
@@ -944,11 +1010,19 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   calendarDaySelected: {
-    backgroundColor: "#ef4444",
+    backgroundColor: AppColors.primary,
     borderRadius: 8,
+    shadowColor: AppColors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   calendarDayToday: {
-    backgroundColor: "#e0f2fe",
+    backgroundColor: AppColors.surface,
     borderRadius: 8,
   },
   calendarDayText: {
@@ -985,7 +1059,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   timeSlotSelected: {
-    backgroundColor: "#ef4444",
+    backgroundColor: AppColors.primary,
+    borderColor: AppColors.primary,
+    shadowColor: AppColors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
   },
   timeSlotText: {
     fontSize: 14,
@@ -1003,11 +1086,19 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   bookAppointmentButton: {
-    backgroundColor: "#ef4444",
+    backgroundColor: AppColors.primary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
     alignItems: "center",
+    shadowColor: AppColors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   bookAppointmentButtonText: {
     color: "white",
@@ -1038,13 +1129,13 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#10b981",
+    backgroundColor: AppColors.primary,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 24,
-    shadowColor: "#000",
+    shadowColor: AppColors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
@@ -1108,7 +1199,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   sessionTypeButtonSelected: {
-    backgroundColor: "#ef4444",
+    backgroundColor: AppColors.primary,
+    shadowColor: AppColors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
   },
   sessionTypeText: {
     fontSize: 16,
@@ -1134,29 +1233,42 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: "#f3f4f6",
+    backgroundColor: AppColors.surface,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: AppColors.border,
   },
   durationButtonSelected: {
-    backgroundColor: "#ef4444",
+    backgroundColor: AppColors.primary,
+    borderColor: AppColors.primary,
+    shadowColor: AppColors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   durationText: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#374151",
+    color: AppColors.textSecondary,
   },
   durationTextSelected: {
     color: "white",
+    fontWeight: "600",
   },
   durationPrice: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#374151",
+    color: AppColors.textSecondary,
   },
   durationPriceSelected: {
     color: "white",
+    fontWeight: "700",
   },
   bottomNav: {
     backgroundColor: "white",
@@ -1185,6 +1297,6 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
   },
   activeTabText: {
-    color: "#ef4444",
+    color: AppColors.primary,
   },
 });
