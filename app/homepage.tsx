@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { AppColors } from "../constants/Colors";
 
 type ActiveTab = "home" | "appointments" | "messages" | "profile";
 
@@ -79,7 +80,7 @@ export default function HomePage() {
       <Ionicons
         name={iconName as any}
         size={24}
-        color={isActive ? "#ef4444" : "#9ca3af"}
+        color={isActive ? AppColors.primary : "#9ca3af"}
       />
     );
   };
@@ -211,6 +212,6 @@ const styles = StyleSheet.create({
     color: "#9ca3af", // gray-400
   },
   activeTabText: {
-    color: "#ef4444", // red-500
+    color: AppColors.primary,
   },
 });

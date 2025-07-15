@@ -13,6 +13,8 @@ import {
   View,
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { AppColors } from "../constants/Colors";
 
 type ActiveTab = "login" | "register";
 
@@ -45,6 +47,7 @@ export default function AuthPage() {
     height: "",
     weight: "",
   });
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({
@@ -53,19 +56,24 @@ export default function AuthPage() {
     }));
   };
 
+  const handleDateConfirm = (date: Date) => {
+    handleInputChange("birthDay", date.toISOString().split("T")[0]);
+    setDatePickerVisible(false);
+  };
+
   const handleLogin = () => {
     // Handle login logic here
     console.log("Login:", {
       civilId: formData.civilId,
       password: formData.password,
     });
-    router.push("/homepage");
+    router.push("/home");
   };
 
   const handleRegister = () => {
     // Handle register logic here
     console.log("Register:", formData);
-    router.push("/homepage");
+    router.push("/home");
   };
 
   const renderLoginForm = () => (
@@ -188,11 +196,19 @@ export default function AuthPage() {
 
       <View style={styles.inputGroup}>
         <Label>Date of Birth</Label>
-        <Input
-          value={formData.birthDay}
-          onChangeText={(value) => handleInputChange("birthDay", value)}
-          placeholder="YYYY-MM-DD"
-        />
+        <TouchableOpacity
+          onPress={() => setDatePickerVisible(true)}
+          style={styles.datePickerInput}
+        >
+          <Text
+            style={{
+              color: formData.birthDay ? "#111827" : "#9ca3af",
+              fontSize: 16,
+            }}
+          >
+            {formData.birthDay || "Select date"}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.inputGroup}>
@@ -256,55 +272,60 @@ export default function AuthPage() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Welcome</Text>
-
-          {/* Tab Navigation */}
-          <View style={styles.tabContainer}>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === "login" && styles.activeTab]}
-              onPress={() => setActiveTab("login")}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "login" && styles.activeTabText,
-                ]}
-              >
-                Login
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === "register" && styles.activeTab]}
-              onPress={() => setActiveTab("register")}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "register" && styles.activeTabText,
-                ]}
-              >
-                Register
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Form */}
-        {activeTab === "login" ? renderLoginForm() : renderRegisterForm()}
-
-        {/* Terms and Conditions */}
-        <View style={styles.termsContainer}>
-          <Text style={styles.termsText}>
-            By continuing, you agree to our{" "}
-            <Text style={styles.termsLink}>Terms & Conditions</Text>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={true}
+        bounces={true}
+      >
+        {/* Welcome Message */}
+        <View style={styles.welcomeContainer}>
+          <Text style={styles.welcomeTitle}>Welcome!</Text>
+          <Text style={styles.welcomeSubtitle}>
+            {activeTab === "login"
+              ? "Sign in to your account"
+              : "Create a new account"}
           </Text>
         </View>
+        {/* Tabs */}
+        <View style={styles.tabRow}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "login" && styles.activeTab]}
+            onPress={() => setActiveTab("login")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "login" && styles.activeTabText,
+              ]}
+            >
+              Login
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "register" && styles.activeTab]}
+            onPress={() => setActiveTab("register")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "register" && styles.activeTabText,
+              ]}
+            >
+              Register
+            </Text>
+          </TouchableOpacity>
+        </View>
+        {activeTab === "login" ? renderLoginForm() : renderRegisterForm()}
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleDateConfirm}
+          onCancel={() => setDatePickerVisible(false)}
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -312,57 +333,69 @@ export default function AuthPage() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#f9fafb", // gray-50
-  },
-  scrollContent: {
-    flexGrow: 1,
+    backgroundColor: AppColors.background,
     paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingBottom: 32,
+    minHeight: "100%",
   },
-  header: {
+  welcomeContainer: {
     alignItems: "center",
     marginBottom: 32,
+    marginTop: 48,
+    paddingHorizontal: 24,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#111827", // gray-900
-    marginBottom: 24,
+  welcomeTitle: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: AppColors.primary,
+    marginBottom: 12,
+    textAlign: "center",
   },
-  tabContainer: {
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: AppColors.textSecondary,
+    textAlign: "center",
+    lineHeight: 24,
+  },
+  tabRow: {
     flexDirection: "row",
-    backgroundColor: "white",
-    borderRadius: 8,
-    padding: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    marginBottom: 32,
+    borderRadius: 12,
+    backgroundColor: AppColors.surface,
+    overflow: "hidden",
+    marginHorizontal: 24,
+    shadowColor: AppColors.primary,
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
+    shadowRadius: 4,
+    elevation: 2,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 6,
+    paddingVertical: 16,
+    alignItems: "center",
   },
   activeTab: {
-    backgroundColor: "#f3f4f6", // gray-100
+    backgroundColor: "#fff",
+    borderBottomWidth: 3,
+    borderBottomColor: AppColors.primary,
+    shadowColor: AppColors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: "500",
-    textAlign: "center",
-    color: "#6b7280", // gray-500
+    fontSize: 16,
+    color: "#6b7280",
+    fontWeight: "600",
   },
   activeTabText: {
-    color: "#111827", // gray-900
+    color: AppColors.primary,
+    fontWeight: "600",
   },
   form: {
-    flex: 1,
+    paddingHorizontal: 0,
   },
   inputGroup: {
     marginBottom: 16,
@@ -427,5 +460,17 @@ const styles = StyleSheet.create({
   termsLink: {
     color: "#374151", // gray-700
     textDecorationLine: "underline",
+  },
+  datePickerInput: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: "#fff",
+    marginTop: 4,
+  },
+  inputFocused: {
+    borderBottomColor: AppColors.primary,
   },
 });

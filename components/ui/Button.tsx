@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ViewStyle,
 } from "react-native";
+import { AppColors } from "../../constants/Colors";
 
 interface ButtonProps {
   onPress: () => void;
@@ -35,12 +36,20 @@ export function Button({
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: "#ef4444", // red-500
+    backgroundColor: AppColors.primary, // Custom green shade #67AE6E
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: AppColors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   buttonText: {
     color: "white",
