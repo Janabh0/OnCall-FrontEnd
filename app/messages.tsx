@@ -122,26 +122,24 @@ export default function MessagesPage() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Messages</Text>
+        <TouchableOpacity
+          style={styles.callButton}
+          onPress={() => router.push("/messages/calls")}
+        >
+          <Ionicons name="call" size={22} color="#10b981" />
+        </TouchableOpacity>
       </View>
 
       {/* Toggle Switch */}
-      <View
-        style={[
-          styles.toggleRow,
-          {
-            alignItems: "center",
-            flexDirection: "row",
-            justifyContent: "space-between",
-          },
-        ]}
-      >
-        <View style={{ flexDirection: "row", flex: 1 }}>
+      <View style={styles.toggleContainer}>
+        <View style={styles.toggleRow}>
           <TouchableOpacity
             style={[
               styles.toggleButton,
               messageMode === "doctors" && styles.toggleButtonActive,
             ]}
             onPress={() => setMessageMode("doctors")}
+            activeOpacity={0.8}
           >
             <Text
               style={[
@@ -158,6 +156,7 @@ export default function MessagesPage() {
               messageMode === "ai" && styles.toggleButtonActive,
             ]}
             onPress={() => setMessageMode("ai")}
+            activeOpacity={0.8}
           >
             <Text
               style={[
@@ -169,12 +168,6 @@ export default function MessagesPage() {
             </Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.callButton}
-          onPress={() => router.push("/messages/calls")}
-        >
-          <Ionicons name="call" size={24} color={AppColors.primary} />
-        </TouchableOpacity>
       </View>
 
       {/* Content */}
@@ -343,54 +336,72 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.background,
   },
   header: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#f1f5f9",
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111827",
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#1f2937",
+  },
+  callButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: "#f0fdf4",
+  },
+  toggleContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   toggleRow: {
     flexDirection: "row",
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "#f8fafc",
     borderRadius: 12,
-    margin: 16,
     padding: 4,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
   },
   toggleButton: {
-    backgroundColor: AppColors.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     alignItems: "center",
-    shadowColor: AppColors.primary,
+    justifyContent: "center",
+  },
+  toggleButtonActive: {
+    backgroundColor: "#10b981",
+    shadowColor: "#10b981",
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  toggleButtonActive: {
-    backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   toggleText: {
-    color: "#6b7280",
-    fontWeight: "600",
-    fontSize: 15,
+    color: "#64748b",
+    fontWeight: "500",
+    fontSize: 14,
   },
   toggleTextActive: {
-    color: "#111827",
+    color: "#ffffff",
+    fontWeight: "600",
   },
   contentArea: {
     flex: 1,
@@ -398,38 +409,48 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   doctorCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 14,
-    marginHorizontal: 16,
-    marginVertical: 6,
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 20,
+    marginVertical: 8,
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderWidth: 0.5,
+    borderColor: "#f1f5f9",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   avatarWrapper: {
-    marginRight: 14,
+    marginRight: 16,
     position: "relative",
   },
   avatarCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#9EC6F3",
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#f0f9ff",
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#e0f2fe",
   },
   onlineDot: {
     position: "absolute",
     bottom: 2,
     right: 2,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#22c55e",
-    borderWidth: 2,
-    borderColor: "#fff",
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#10b981",
+    borderWidth: 2.5,
+    borderColor: "#ffffff",
   },
   doctorRow: {
     flexDirection: "row",
@@ -437,95 +458,124 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   doctorName: {
-    fontWeight: "700",
+    fontWeight: "600",
     fontSize: 16,
-    color: "#111827",
+    color: "#1f2937",
     flex: 1,
+    marginBottom: 2,
   },
   lastMessageTime: {
-    color: "#6b7280",
+    color: "#94a3b8",
     fontSize: 12,
     marginLeft: 8,
+    fontWeight: "500",
   },
   unreadBadge: {
     backgroundColor: "#ef4444",
-    borderRadius: 8,
-    minWidth: 18,
-    height: 18,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 6,
-    paddingHorizontal: 4,
+    marginLeft: 8,
+    paddingHorizontal: 6,
   },
   unreadBadgeText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 12,
+    color: "#ffffff",
+    fontWeight: "600",
+    fontSize: 11,
   },
   doctorSpecialty: {
-    color: "#9EC6F3",
+    color: "#10b981",
     fontSize: 13,
     marginTop: 2,
-    marginBottom: 2,
+    marginBottom: 4,
+    fontWeight: "500",
   },
   lastMessage: {
-    color: "#6b7280",
-    fontSize: 13,
+    color: "#64748b",
+    fontSize: 14,
     marginTop: 2,
+    lineHeight: 18,
   },
   aiContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 32,
+    paddingHorizontal: 40,
+    backgroundColor: "#fafafa",
   },
   aiIconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: "#9EC6F3",
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "#f0f9ff",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 18,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: "#e0f2fe",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   aiTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 6,
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#1f2937",
+    marginBottom: 8,
     textAlign: "center",
   },
   aiSubtitle: {
-    color: "#6b7280",
+    color: "#64748b",
     fontSize: 15,
-    marginBottom: 18,
+    marginBottom: 32,
     textAlign: "center",
+    lineHeight: 22,
   },
   uploadButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#ef4444",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#10b981",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 10,
-    shadowColor: "#ef4444",
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    marginTop: 8,
+    shadowColor: "#10b981",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   uploadedFileName: {
-    color: "#374151",
+    color: "#1f2937",
     fontSize: 15,
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: "center",
+    fontWeight: "500",
   },
   bottomNav: {
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: "#ffffff",
+    borderTopWidth: 0.5,
+    borderTopColor: "#f1f5f9",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 8,
   },
   tabContainer: {
     flexDirection: "row",
@@ -562,18 +612,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4.84,
     elevation: 8,
-  },
-  callButton: {
-    marginLeft: 12,
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 8,
-    shadowColor: AppColors.primary,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

@@ -64,18 +64,25 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <FavouritesProvider>
-        <Stack>
-          <Stack.Screen name="auth" options={{ headerShown: false }} />
-          <Stack.Screen name="homepage" options={{ headerShown: false }} />
-          <Stack.Screen name="home" options={{ headerShown: false }} />
-          <Stack.Screen name="appointments" options={{ headerShown: false }} />
-          <Stack.Screen name="messages" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="messages/chat/[doctorId]"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen name="profile" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            headerStyle: { backgroundColor: "transparent" },
+            headerTransparent: true,
+            headerTintColor: "transparent",
+            headerBackVisible: false,
+            gestureEnabled: true,
+            gestureDirection: "horizontal",
+          }}
+        >
+          <Stack.Screen name="auth" />
+          <Stack.Screen name="homepage" />
+          <Stack.Screen name="home" />
+          <Stack.Screen name="appointments" />
+          <Stack.Screen name="messages" />
+          <Stack.Screen name="messages/chat/[doctorId]" />
+          <Stack.Screen name="profile" />
+          <Stack.Screen name="(tabs)" />
           <Stack.Screen name="+not-found" />
         </Stack>
         <StatusBar style="auto" />

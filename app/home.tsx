@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
+  Modal,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -29,10 +30,63 @@ interface Appointment {
   date: string;
 }
 
+interface PreviousAppointment {
+  id: string;
+  doctorId: string;
+  doctorName: string;
+  specialty: string;
+  type: string;
+  time: string;
+  date: string;
+  isFavourite: boolean;
+  rating: number;
+}
+
 // Accept favouriteDoctors as a prop for now (to be synced with appointments page)
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("home");
-  const { favouriteDoctors } = useFavourites();
+  const [showPreviousAppointments, setShowPreviousAppointments] =
+    useState(false);
+  const { favouriteDoctors, toggleFavourite } = useFavourites();
+
+  // Mock previous appointments data - sync with global favorites
+  const [previousAppointments, setPreviousAppointments] = useState<
+    PreviousAppointment[]
+  >([
+    {
+      id: "1",
+      doctorId: "1",
+      doctorName: "Dr. Shoug alkanderi",
+      specialty: "Physical therapy",
+      type: "Physical Therapy Session",
+      time: "10:00 AM",
+      date: "2024-01-15",
+      isFavourite: favouriteDoctors.some((d) => d.id === "1"),
+      rating: 0,
+    },
+    {
+      id: "2",
+      doctorId: "2",
+      doctorName: "Dr. Jana Alhamad",
+      specialty: "Dermatologist",
+      type: "Skin Consultation",
+      time: "2:30 PM",
+      date: "2024-01-10",
+      isFavourite: favouriteDoctors.some((d) => d.id === "2"),
+      rating: 5,
+    },
+    {
+      id: "3",
+      doctorId: "3",
+      doctorName: "Dr. Fatma Zamanan",
+      specialty: "Internal medicine doctor",
+      type: "General Checkup",
+      time: "9:00 AM",
+      date: "2024-01-05",
+      isFavourite: favouriteDoctors.some((d) => d.id === "3"),
+      rating: 4,
+    },
+  ]);
 
   // Mock user data
   const userName = "Dalal";
@@ -66,6 +120,49 @@ export default function HomePage() {
   const handleBookAppointment = () => {
     router.push("/appointments");
   };
+
+  const handleToggleFavourite = (appointment: PreviousAppointment) => {
+    // Convert appointment to Doctor format and use global favorites
+    const doctor: Doctor = {
+      id: appointment.doctorId,
+      name: appointment.doctorName,
+      specialty: appointment.specialty,
+      image: "", // We don't have image in appointment data
+    };
+
+    toggleFavourite(doctor);
+
+    // Update local state to reflect the change
+    setPreviousAppointments((prev) =>
+      prev.map((apt) =>
+        apt.id === appointment.id
+          ? { ...apt, isFavourite: !apt.isFavourite }
+          : apt
+      )
+    );
+  };
+
+  const handleRating = (appointmentId: string, rating: number) => {
+    setPreviousAppointments((prev) =>
+      prev.map((appointment) =>
+        appointment.id === appointmentId
+          ? { ...appointment, rating }
+          : appointment
+      )
+    );
+  };
+
+  // Sync previous appointments with global favorites
+  useEffect(() => {
+    setPreviousAppointments((prev) =>
+      prev.map((appointment) => ({
+        ...appointment,
+        isFavourite: favouriteDoctors.some(
+          (d) => d.id === appointment.doctorId
+        ),
+      }))
+    );
+  }, [favouriteDoctors]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -120,8 +217,12 @@ export default function HomePage() {
               <Text style={styles.bookButtonText}>Book Appointment</Text>
             </TouchableOpacity>
             <View style={styles.viewRecordsButton}>
-              <TouchableOpacity onPress={() => router.push("/records")}>
-                <Text style={styles.viewRecordsText}>View Records</Text>
+              <TouchableOpacity
+                onPress={() => setShowPreviousAppointments(true)}
+              >
+                <Text style={styles.viewRecordsText}>
+                  Previous Appointments
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -192,6 +293,114 @@ export default function HomePage() {
           )}
         </View>
       </ScrollView>
+
+      {/* Previous Appointments Modal */}
+      <Modal
+        visible={showPreviousAppointments}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          {/* Modal Header */}
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              style={styles.modalBackButton}
+              onPress={() => setShowPreviousAppointments(false)}
+            >
+              <Ionicons name="arrow-back" size={20} color="#6b7280" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Previous Appointments</Text>
+            <View style={styles.modalHeaderSpacer} />
+          </View>
+
+          {/* Modal Content */}
+          <ScrollView
+            style={styles.modalContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {previousAppointments.length === 0 ? (
+              <View style={styles.noAppointmentsContainer}>
+                <Text style={styles.noAppointmentsText}>
+                  No previous appointments
+                </Text>
+              </View>
+            ) : (
+              previousAppointments.map((appointment) => (
+                <View
+                  key={appointment.id}
+                  style={styles.previousAppointmentCard}
+                >
+                  <View style={styles.appointmentHeader}>
+                    <View style={styles.doctorInfo}>
+                      <View style={styles.doctorAvatar}>
+                        <Ionicons
+                          name="person"
+                          size={24}
+                          color={AppColors.primary}
+                        />
+                      </View>
+                      <View style={styles.doctorDetails}>
+                        <Text style={styles.doctorName}>
+                          {appointment.doctorName}
+                        </Text>
+                        <Text style={styles.doctorSpecialty}>
+                          {appointment.specialty}
+                        </Text>
+                        <Text style={styles.appointmentDate}>
+                          {appointment.date} · {appointment.time}
+                        </Text>
+                        <Text style={styles.appointmentType}>
+                          {appointment.type}
+                        </Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.favouriteButton}
+                      onPress={() => handleToggleFavourite(appointment)}
+                    >
+                      <Ionicons
+                        name={
+                          appointment.isFavourite ? "heart" : "heart-outline"
+                        }
+                        size={24}
+                        color={appointment.isFavourite ? "#FF6B6B" : "#9ca3af"}
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Rating Section */}
+                  <View style={styles.ratingSection}>
+                    <Text style={styles.ratingLabel}>
+                      Rate your experience:
+                    </Text>
+                    <View style={styles.starsContainer}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <TouchableOpacity
+                          key={star}
+                          style={styles.starButton}
+                          onPress={() => handleRating(appointment.id, star)}
+                        >
+                          <Ionicons
+                            name={
+                              appointment.rating >= star
+                                ? "star"
+                                : "star-outline"
+                            }
+                            size={20}
+                            color={
+                              appointment.rating >= star ? "#FFD700" : "#9ca3af"
+                            }
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+              ))
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNav}>
@@ -524,5 +733,97 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 6,
     fontSize: 14,
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "white",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  modalBackButton: {
+    padding: 4,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  modalHeaderSpacer: {
+    width: 28,
+  },
+  modalContent: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  noAppointmentsContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  noAppointmentsText: {
+    fontSize: 16,
+    color: "#6b7280",
+    textAlign: "center",
+  },
+  previousAppointmentCard: {
+    backgroundColor: "white",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  appointmentHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  favouriteButton: {
+    padding: 4,
+  },
+  ratingSection: {
+    borderTopWidth: 1,
+    borderTopColor: "#f3f4f6",
+    paddingTop: 12,
+  },
+  ratingLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#374151",
+    marginBottom: 8,
+  },
+  starsContainer: {
+    flexDirection: "row",
+    gap: 4,
+  },
+  starButton: {
+    padding: 2,
+  },
+  appointmentDate: {
+    fontSize: 13,
+    color: "#6b7280",
+    marginTop: 2,
+  },
+  appointmentType: {
+    fontSize: 14,
+    color: "#374151",
+    fontWeight: "500",
+    marginTop: 4,
   },
 });

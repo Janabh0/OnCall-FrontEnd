@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -12,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { AppColors } from "../constants/Colors";
 
 type ActiveTab = "home" | "appointments" | "messages" | "profile";
@@ -42,10 +44,10 @@ export default function ProfilePage() {
     confirmed: false,
   });
 
-  // Calendar state for date of birth selection
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [showCalendar, setShowCalendar] = useState(false);
+  // Date picker state for date of birth selection
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+  // Medical history file upload state
+  const [uploadedMedicalFile, setUploadedMedicalFile] = useState<any>(null);
 
   const handleTabPress = (tab: ActiveTab) => {
     setActiveTab(tab);
@@ -72,83 +74,33 @@ export default function ProfilePage() {
     }));
   };
 
-  // Calendar functions
-  const goToPreviousMonth = () => {
-    setCurrentMonth((prev) => {
-      const newDate = new Date(prev);
-      newDate.setMonth(prev.getMonth() - 1);
-      return newDate;
-    });
-  };
-
-  const goToNextMonth = () => {
-    setCurrentMonth((prev) => {
-      const newDate = new Date(prev);
-      newDate.setMonth(prev.getMonth() + 1);
-      return newDate;
-    });
-  };
-
-  const formatMonthYear = (date: Date) => {
-    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-  };
-
-  const generateCalendarDays = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startDayOfWeek = firstDay.getDay();
-
-    const days = [];
-
-    // Add empty cells for days before the first day of the month
-    for (let i = 0; i < startDayOfWeek; i++) {
-      days.push(null);
-    }
-
-    // Add days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push(day);
-    }
-
-    return days;
-  };
-
-  const handleDateSelect = (day: number) => {
-    const selectedDateObj = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day
-    );
-    setSelectedDate(selectedDateObj);
-
-    // Format the date as YYYY-MM-DD
-    const formattedDate = selectedDateObj.toISOString().split("T")[0];
+  // Date picker functions
+  const handleDateConfirm = (date: Date) => {
+    const formattedDate = date.toISOString().split("T")[0];
     handleInputChange("dateOfBirth", formattedDate);
-    setShowCalendar(false);
+    setDatePickerVisible(false);
   };
 
-  const isDateSelected = (day: number) => {
-    if (!selectedDate || !day) return false;
-    return (
-      selectedDate.getDate() === day &&
-      selectedDate.getMonth() === currentMonth.getMonth() &&
-      selectedDate.getFullYear() === currentMonth.getFullYear()
-    );
+  // Medical history file upload function
+  const handleMedicalHistoryUpload = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          "application/pdf",
+          "image/*",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (!result.canceled) {
+        setUploadedMedicalFile(result);
+      }
+    } catch (e) {
+      Alert.alert("Error", "Could not open document picker.");
+    }
   };
-
-  const isToday = (day: number) => {
-    const today = new Date();
-    return (
-      today.getDate() === day &&
-      today.getMonth() === currentMonth.getMonth() &&
-      today.getFullYear() === currentMonth.getFullYear()
-    );
-  };
-
-  const calendarDays = generateCalendarDays(currentMonth);
 
   const handleAddPatient = () => {
     if (!patientForm.confirmed) {
@@ -192,8 +144,25 @@ export default function ProfilePage() {
       specialCareInstructions: "",
       confirmed: false,
     });
-    setSelectedDate(null);
-    setShowCalendar(false);
+    setDatePickerVisible(false);
+    setUploadedMedicalFile(null);
+  };
+
+  const handleLogout = () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: () => {
+          // Handle logout logic here
+          router.push("/auth");
+        },
+      },
+    ]);
   };
 
   const renderTabIcon = (tabName: ActiveTab, iconName: string) => {
@@ -215,7 +184,10 @@ export default function ProfilePage() {
           <Ionicons name="arrow-back" size={24} color="#6b7280" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Profile</Text>
-        <View style={styles.headerSpacer} />
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={20} color="#10b981" />
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Profile Content */}
@@ -371,88 +343,15 @@ export default function ProfilePage() {
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Date of Birth *</Text>
               <TouchableOpacity
+                onPress={() => setDatePickerVisible(true)}
                 style={styles.formInput}
-                onPress={() => setShowCalendar(true)}
               >
                 <Text style={styles.formInputText}>
-                  {selectedDate
-                    ? selectedDate.toLocaleDateString()
-                    : "Select Date"}
+                  {patientForm.dateOfBirth || "Select date"}
                 </Text>
                 <Ionicons name="calendar" size={20} color="#9ca3af" />
               </TouchableOpacity>
             </View>
-
-            {/* Calendar Modal */}
-            {showCalendar && (
-              <View style={styles.calendarOverlay}>
-                <View style={styles.calendarModal}>
-                  <View style={styles.calendarHeader}>
-                    <TouchableOpacity onPress={goToPreviousMonth}>
-                      <Ionicons name="chevron-back" size={24} color="#6b7280" />
-                    </TouchableOpacity>
-                    <Text style={styles.calendarMonthYear}>
-                      {formatMonthYear(currentMonth)}
-                    </Text>
-                    <TouchableOpacity onPress={goToNextMonth}>
-                      <Ionicons
-                        name="chevron-forward"
-                        size={24}
-                        color="#6b7280"
-                      />
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.calendarGrid}>
-                    {/* Days of the week */}
-                    <View style={styles.calendarDayNames}>
-                      <Text style={styles.calendarDayName}>Sun</Text>
-                      <Text style={styles.calendarDayName}>Mon</Text>
-                      <Text style={styles.calendarDayName}>Tue</Text>
-                      <Text style={styles.calendarDayName}>Wed</Text>
-                      <Text style={styles.calendarDayName}>Thu</Text>
-                      <Text style={styles.calendarDayName}>Fri</Text>
-                      <Text style={styles.calendarDayName}>Sat</Text>
-                    </View>
-                    {/* Calendar days */}
-                    <View style={styles.calendarDays}>
-                      {calendarDays.map((day, index) => {
-                        const isSelected = day ? isDateSelected(day) : false;
-                        const isTodayDate = day ? isToday(day) : false;
-
-                        return (
-                          <TouchableOpacity
-                            key={index}
-                            style={[
-                              styles.calendarDay,
-                              isSelected && styles.calendarDaySelected,
-                              isTodayDate && styles.calendarDayToday,
-                            ]}
-                            onPress={() => day && handleDateSelect(day)}
-                            disabled={!day}
-                          >
-                            <Text
-                              style={[
-                                styles.calendarDayText,
-                                isSelected && styles.calendarDayTextSelected,
-                                isTodayDate && styles.calendarDayTextToday,
-                              ]}
-                            >
-                              {day}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.calendarCloseButton}
-                    onPress={() => setShowCalendar(false)}
-                  >
-                    <Text style={styles.calendarCloseButtonText}>Close</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
 
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Gender *</Text>
@@ -526,18 +425,37 @@ export default function ProfilePage() {
 
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Medical History</Text>
-              <TextInput
-                style={[styles.formInput, styles.textArea]}
-                value={patientForm.medicalHistory}
-                onChangeText={(value) =>
-                  handleInputChange("medicalHistory", value)
-                }
-                placeholder="Enter medical history"
-                placeholderTextColor="#9ca3af"
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
+              <View style={styles.medicalHistoryContainer}>
+                <TextInput
+                  style={[
+                    styles.formInput,
+                    styles.textArea,
+                    styles.medicalHistoryInput,
+                  ]}
+                  value={patientForm.medicalHistory}
+                  onChangeText={(value) =>
+                    handleInputChange("medicalHistory", value)
+                  }
+                  placeholder="Enter medical history"
+                  placeholderTextColor="#9ca3af"
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+                <TouchableOpacity
+                  style={styles.uploadButtonInside}
+                  onPress={handleMedicalHistoryUpload}
+                >
+                  <Ionicons name="cloud-upload" size={18} color="white" />
+                </TouchableOpacity>
+              </View>
+              {uploadedMedicalFile && (
+                <View style={styles.uploadedFileContainer}>
+                  <Text style={styles.uploadedFileName}>
+                    📎 {uploadedMedicalFile.name}
+                  </Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.formGroup}>
@@ -587,6 +505,14 @@ export default function ProfilePage() {
               <Text style={styles.submitButtonText}>Register Patient</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Date Picker Modal */}
+          <DateTimePickerModal
+            isVisible={isDatePickerVisible}
+            mode="date"
+            onConfirm={handleDateConfirm}
+            onCancel={() => setDatePickerVisible(false)}
+          />
         </SafeAreaView>
       </Modal>
 
@@ -685,8 +611,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#111827",
   },
-  headerSpacer: {
-    width: 32,
+  logoutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "#f0fdf4",
+    borderWidth: 1,
+    borderColor: "#dcfce7",
+  },
+  logoutText: {
+    color: "#10b981",
+    fontSize: 14,
+    fontWeight: "500",
+    marginLeft: 6,
   },
   content: {
     flex: 1,
@@ -992,102 +931,44 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E1EEBC",
   },
-
-  // Calendar styles
-  calendarOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
+  medicalHistoryContainer: {
+    position: "relative",
   },
-  calendarModal: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    width: "90%",
-    maxWidth: 350,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+  medicalHistoryInput: {
+    paddingRight: 50, // Make space for the upload button
+  },
+  uploadButtonInside: {
+    position: "absolute",
+    right: 8,
+    top: "50%",
+    transform: [{ translateY: -16 }], // Half of the button height (32/2)
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: AppColors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: AppColors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowRadius: 3.84,
     elevation: 5,
   },
-  calendarHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
-  },
-  calendarMonthYear: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  calendarGrid: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  calendarDayNames: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 8,
-  },
-  calendarDayName: {
-    fontSize: 12,
-    color: "#6b7280",
-    fontWeight: "500",
-  },
-  calendarDays: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-around",
-  },
-  calendarDay: {
-    width: "14%", // 7 days in a week
-    aspectRatio: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginVertical: 4,
-    borderRadius: 8,
-  },
-  calendarDaySelected: {
-    backgroundColor: AppColors.primary,
-    borderColor: AppColors.primary,
-  },
-  calendarDayToday: {
+  uploadedFileContainer: {
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     backgroundColor: AppColors.surfaceLight,
-    borderColor: AppColors.surfaceLight,
-  },
-  calendarDayText: {
-    fontSize: 14,
-    color: "#6b7280",
-  },
-  calendarDayTextSelected: {
-    color: "white",
-    fontWeight: "500",
-  },
-  calendarDayTextToday: {
-    color: AppColors.primary,
-    fontWeight: "500",
-  },
-  calendarCloseButton: {
-    backgroundColor: AppColors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
     borderRadius: 8,
-    alignItems: "center",
-    marginTop: 16,
+    borderWidth: 1,
+    borderColor: AppColors.border,
   },
-  calendarCloseButtonText: {
-    color: "white",
-    fontSize: 16,
+  uploadedFileName: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
     fontWeight: "500",
   },
 });

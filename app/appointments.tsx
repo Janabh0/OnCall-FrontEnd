@@ -13,7 +13,6 @@ import {
   View,
 } from "react-native";
 import { AppColors } from "../constants/Colors";
-import { useFavourites } from "./_layout";
 
 type ActiveTab = "home" | "appointments" | "messages" | "profile";
 
@@ -99,7 +98,6 @@ export default function AppointmentsPage() {
   const [selectedDuration, setSelectedDuration] =
     useState<DurationOption | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const { favouriteDoctors, toggleFavourite } = useFavourites();
 
   // Calendar date handling
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -331,48 +329,25 @@ export default function AppointmentsPage() {
 
         {/* Doctors List */}
         <View style={styles.doctorsList}>
-          {filteredDoctors.map((doctor) => {
-            const isFavourite = favouriteDoctors.some(
-              (d) => d.id === doctor.id
-            );
-            return (
-              <View key={doctor.id} style={styles.doctorCard}>
-                <View style={styles.doctorInfo}>
-                  <View style={styles.doctorAvatar}>
-                    <Ionicons
-                      name="person"
-                      size={24}
-                      color={AppColors.primary}
-                    />
-                  </View>
-                  <View style={styles.doctorDetails}>
-                    <Text style={styles.doctorName}>{doctor.name}</Text>
-                    <Text style={styles.doctorSpecialty}>
-                      {doctor.specialty}
-                    </Text>
-                  </View>
+          {filteredDoctors.map((doctor) => (
+            <View key={doctor.id} style={styles.doctorCard}>
+              <View style={styles.doctorInfo}>
+                <View style={styles.doctorAvatar}>
+                  <Ionicons name="person" size={24} color={AppColors.primary} />
                 </View>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <TouchableOpacity
-                    style={styles.bookButton}
-                    onPress={() => handleBookDoctor(doctor)}
-                  >
-                    <Text style={styles.bookButtonText}>Book</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{ marginLeft: 12 }}
-                    onPress={() => toggleFavourite(doctor)}
-                  >
-                    <Ionicons
-                      name={isFavourite ? "heart" : "heart-outline"}
-                      size={26}
-                      color={isFavourite ? AppColors.primary : "#9ca3af"}
-                    />
-                  </TouchableOpacity>
+                <View style={styles.doctorDetails}>
+                  <Text style={styles.doctorName}>{doctor.name}</Text>
+                  <Text style={styles.doctorSpecialty}>{doctor.specialty}</Text>
                 </View>
               </View>
-            );
-          })}
+              <TouchableOpacity
+                style={styles.bookButton}
+                onPress={() => handleBookDoctor(doctor)}
+              >
+                <Text style={styles.bookButtonText}>Book</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
       </ScrollView>
 
@@ -807,15 +782,18 @@ const styles = StyleSheet.create({
   },
   specialtyContainer: {
     marginBottom: 8,
+    marginHorizontal: -16, // Extend beyond the parent padding
+    paddingHorizontal: 16, // Add padding to maintain spacing
   },
   specialtyButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: AppColors.surface,
-    marginRight: 8,
+    marginRight: 12,
     borderWidth: 1,
     borderColor: AppColors.border,
+    flexShrink: 0, // Prevent shrinking
   },
   specialtyButtonSelected: {
     backgroundColor: AppColors.primary,
